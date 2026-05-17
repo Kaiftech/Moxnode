@@ -1,3 +1,4 @@
+use crate::evolution::society::IntentInfluence;
 use crate::memory::CreatureMemory;
 use rand::Rng;
 
@@ -26,7 +27,11 @@ impl Intent {
     }
 }
 
-pub fn choose_intent(mem: &CreatureMemory, rng: &mut impl Rng) -> Intent {
+pub fn choose_intent(
+    mem: &CreatureMemory,
+    rng: &mut impl Rng,
+    influence: Option<IntentInfluence>,
+) -> Intent {
     let mut w = [
         (Intent::Think, 22.0_f64),
         (Intent::Search, 12.0),
@@ -49,6 +54,16 @@ pub fn choose_intent(mem: &CreatureMemory, rng: &mut impl Rng) -> Intent {
     w[4].1 += ambition * 0.05 + mem.intelligence as f64 * 0.04;
     w[5].1 += chaos * 0.07;
     w[6].1 += creativity * 0.08 + mem.trait_val("logic") as f64 * 0.03;
+
+    if let Some(inf) = influence {
+        w[0].1 += inf.think;
+        w[1].1 += inf.search;
+        w[2].1 += inf.rest;
+        w[3].1 += inf.obsess;
+        w[4].1 += inf.plan;
+        w[5].1 += inf.mutate;
+        w[6].1 += inf.write;
+    }
 
     if mem.energy_level < 25 {
         w[2].1 += 40.0;

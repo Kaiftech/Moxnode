@@ -1,5 +1,6 @@
 mod creature;
 mod decide;
+mod evolution;
 mod memory;
 mod net;
 mod selfwrite;
@@ -9,6 +10,7 @@ mod wired;
 
 use clap::Parser;
 use creature::{load_or_create, Creature};
+use evolution::EvolutionConfig;
 use memory::DEFAULT_MEMORY;
 use net::{Net, NetBudget};
 use std::path::PathBuf;
@@ -66,18 +68,61 @@ struct Cli {
     /// Swarm pause between ticks in ms (0 = peg CPU).
     #[arg(long, default_value = "2")]
     pause_ms: u64,
+
+    /// Enable all evolution subsystems.
+    #[arg(long)]
+    evolution: bool,
+
+    #[arg(long)]
+    enable_internet: bool,
+
+    #[arg(long)]
+    enable_memory_decay: bool,
+
+    #[arg(long)]
+    enable_society: bool,
+
+    #[arg(long)]
+    enable_habits: bool,
+
+    #[arg(long)]
+    enable_priorities: bool,
+
+    #[arg(long)]
+    enable_dreams: bool,
+
+    #[arg(long)]
+    enable_rituals: bool,
+
+    #[arg(long)]
+    enable_expression: bool,
+
+    #[arg(long)]
+    enable_leaps: bool,
 }
 
 fn main() {
     let cli = Cli::parse();
     init_rayon(cli.threads);
+    let evo = EvolutionConfig::from_cli(
+        cli.evolution,
+        cli.enable_internet,
+        cli.enable_memory_decay,
+        cli.enable_society,
+        cli.enable_habits,
+        cli.enable_priorities,
+        cli.enable_dreams,
+        cli.enable_rituals,
+        cli.enable_expression,
+        cli.enable_leaps,
+    );
     print_banner();
 
     let stop = Arc::new(AtomicBool::new(false));
     install_ctrlc(Arc::clone(&stop));
 
     if cli.status || cli.once {
-        return run_single(&cli, &stop);
+        return run_single(&cli, &stop, evo);
     }
 
     if cli.fast || cli.swarm.is_some() && cli.swarm != Some(0) {
@@ -97,7 +142,7 @@ fn main() {
         return;
     }
 
-    run_single_loop(&cli, stop);
+    run_single_loop(&cli, stop, evo);
 }
 
 fn resolve_swarm_count(cli: &Cli) -> usize {
@@ -126,8 +171,8 @@ fn install_ctrlc(stop: Arc<AtomicBool>) {
 }
 
 /// Default: one Moxnode, infinite loop, saves every tick.
-fn run_single_loop(cli: &Cli, stop: Arc<AtomicBool>) {
-    let mut creature = load_or_create(&cli.memory, true, Some(&cli.writings));
+fn run_single_loop(cli: &Cli, stop: Arc<AtomicBool>, evo: EvolutionConfig) {
+    let mut creature = load_or_create(&cli.memory, true, Some(&cli.writings), evo);
     let net = Net::new();
     let budget = NetBudget::new(cli.net_budget);
 
@@ -148,8 +193,8 @@ fn run_single_loop(cli: &Cli, stop: Arc<AtomicBool>) {
     let _ = creature.save();
 }
 
-fn run_single(cli: &Cli, _stop: &Arc<AtomicBool>) {
-    let mut creature = load_or_create(&cli.memory, true, Some(&cli.writings));
+fn run_single(cli: &Cli, _stop: &Arc<AtomicBool>, evo: EvolutionConfig) {
+    let mut creature = load_or_create(&cli.memory, true, Some(&cli.writings), evo);
     if cli.status {
         creature.reflect();
         return;
@@ -177,5 +222,6 @@ fn print_banner() {
     println!("  moxnode.exe              # your creature, loops forever");
     println!("  moxnode.exe --fast       # rayon swarm, max speed");
     println!("  moxnode.exe --swarm 1000 # 1000 parallel creatures");
+    println!("  moxnode.exe --evolution   # full evolution layer");
     println!();
 }

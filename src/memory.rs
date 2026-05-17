@@ -1,3 +1,4 @@
+use crate::evolution::EvolutionState;
 use rand::Rng;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
@@ -68,6 +69,9 @@ pub struct CreatureMemory {
     /// What the creature chose to do last tick (agency trace).
     #[serde(default)]
     pub last_intent: String,
+    /// Evolution layer persistent state.
+    #[serde(default)]
+    pub evolution: EvolutionState,
 }
 
 impl CreatureMemory {
@@ -103,6 +107,7 @@ impl CreatureMemory {
             curiosity: rng.gen_range(50..150),
             thought_archive: Vec::new(),
             last_intent: String::new(),
+            evolution: EvolutionState::default(),
         }
     }
 
@@ -144,6 +149,7 @@ impl CreatureMemory {
         self.energy_level = clamp(self.energy_level, 0, 100);
         self.curiosity = clamp(self.curiosity, 0, 100);
         self.intelligence = clamp(self.intelligence, 0, 100);
+        self.evolution.ensure_defaults(self.run_count);
     }
 
     pub fn trait_val(&self, name: &str) -> i32 {

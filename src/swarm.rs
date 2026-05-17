@@ -1,4 +1,5 @@
 use crate::creature::Creature;
+use crate::evolution::EvolutionConfig;
 use crate::memory::{memory_path_swarm, CreatureMemory};
 use crate::net::{Net, NetBudget};
 use rayon::prelude::*;
@@ -34,7 +35,7 @@ pub fn run_swarm(cfg: SwarmConfig, stop: Arc<AtomicBool>) {
             } else {
                 spawn_mem(id)
             };
-            Creature::from_memory(mem, Some(path), false, Some(&cfg.writings))
+            Creature::from_memory(mem, Some(path), false, Some(&cfg.writings), EvolutionConfig::none())
         })
         .collect();
 

@@ -1,4 +1,5 @@
-use crate::decide::{choose_intent, Intent};
+use crate::decide::Intent;
+use crate::evolution::{self, EvolutionConfig};
 use crate::memory::{clamp, normalize_topic, push_cap, CreatureMemory, TRAITS};
 use crate::net::{Net, NetBudget};
 use crate::selfwrite::SelfWriter;
@@ -12,6 +13,7 @@ pub struct Creature {
     path: Option<PathBuf>,
     pub verbose: bool,
     writer: Option<SelfWriter>,
+    pub evo: EvolutionConfig,
 }
 
 impl Creature {
@@ -20,6 +22,7 @@ impl Creature {
         path: Option<PathBuf>,
         verbose: bool,
         writings: Option<&Path>,
+        evo: EvolutionConfig,
     ) -> Self {
         let writer = writings.and_then(|dir| SelfWriter::open(dir, &mem.name).ok());
         if verbose {
@@ -27,11 +30,15 @@ impl Creature {
                 println!("✍️  writes itself → {}", w.root().display());
             }
         }
+        if verbose && evo.any() {
+            println!("🧬 evolution layer active");
+        }
         Self {
             mem,
             path,
             verbose,
             writer,
+            evo,
         }
     }
 
@@ -46,12 +53,43 @@ impl Creature {
     }
 
     pub fn tick(&mut self, net: &Net, budget: &NetBudget, rng: &mut impl Rng) {
-        let intent = choose_intent(&self.mem, rng);
+        if self.evo.any() {
+            evolution::pre_tick(&mut self.mem, &self.evo, rng);
+            if evolution::try_leap(&mut self.mem, net, budget, &self.evo, rng, self.verbose) {
+                self.finish_tick(rng);
+                return;
+            }
+        }
+
+        let intent = if self.evo.any() {
+            evolution::pick_intent(&mut self.mem, &self.evo, rng)
+        } else {
+            crate::decide::choose_intent(&self.mem, rng, None)
+        };
         self.mem.last_intent = intent.label().to_string();
 
         match intent {
             Intent::Think => self.do_think(rng),
-            Intent::Search => self.do_search(net, budget, rng),
+            Intent::Search => {
+                if self.evo.internet {
+                    let world_done =
+                        evolution::try_world_search(&mut self.mem, net, budget, &self.evo, rng, self.verbose);
+                    if !world_done {
+                        self.do_search(net, budget, rng);
+                    } else {
+                        self.mem.age += 1;
+                        let thought = compose_thought(&self.mem, rng);
+                        let thought = evolution::style_thought(&self.mem, &self.evo, thought);
+                        if self.verbose {
+                            let p = evolution::expression::prefix_line(&self.mem.evolution, &self.evo, "think");
+                            println!("{p} [{}] {}", self.mem.name, thought);
+                        }
+                        self.mem.remember_thought(thought);
+                    }
+                } else {
+                    self.do_search(net, budget, rng);
+                }
+            }
             Intent::Rest => self.do_rest(rng),
             Intent::Obsess => self.do_obsess(rng),
             Intent::Plan => self.do_plan(rng),
@@ -59,9 +97,17 @@ impl Creature {
             Intent::Write => self.do_write(rng),
         }
 
+        self.finish_tick(rng);
+    }
+
+    fn finish_tick(&mut self, rng: &mut impl Rng) {
         self.mem.run_count += 1;
         self.update_mood(rng);
         self.mem.energy_level = clamp(self.mem.energy_level, 0, 100);
+
+        if self.evo.any() {
+            evolution::post_tick(&mut self.mem, &self.evo, rng, self.verbose);
+        }
 
         if let Some(w) = &self.writer {
             w.after_tick(&self.mem, rng);
@@ -71,8 +117,10 @@ impl Creature {
     fn do_think(&mut self, rng: &mut impl Rng) {
         self.mem.age += 1;
         let thought = compose_thought(&self.mem, rng);
+        let thought = evolution::style_thought(&self.mem, &self.evo, thought);
         if self.verbose {
-            println!("💭 [{}] {}", self.mem.name, thought);
+            let p = evolution::expression::prefix_line(&self.mem.evolution, &self.evo, "think");
+            println!("{p} [{}] {}", self.mem.name, thought);
         }
         self.mem.remember_thought(thought);
         self.mem.energy_level += rng.gen_range(-8..12);
@@ -310,7 +358,12 @@ impl Creature {
     }
 }
 
-pub fn load_or_create(path: &Path, verbose: bool, writings: Option<&Path>) -> Creature {
+pub fn load_or_create(
+    path: &Path,
+    verbose: bool,
+    writings: Option<&Path>,
+    evo: EvolutionConfig,
+) -> Creature {
     let mut rng = rand::thread_rng();
     let mem = match CreatureMemory::load(path) {
         Ok(m) => {
@@ -331,7 +384,7 @@ pub fn load_or_create(path: &Path, verbose: bool, writings: Option<&Path>) -> Cr
             m
         }
     };
-    Creature::from_memory(mem, Some(path.to_path_buf()), verbose, writings)
+    Creature::from_memory(mem, Some(path.to_path_buf()), verbose, writings, evo)
 }
 
 fn truncate(s: &str, n: usize) -> String {
