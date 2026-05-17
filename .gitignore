@@ -1,0 +1,7 @@
+/target/
+*.exe
+!moxnode.exe
+*.bak
+moxnode.log
+/writings/
+/swarm/

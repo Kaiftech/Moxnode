@@ -1,0 +1,25 @@
+[package]
+name = "moxnode"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+rand = "0.8"
+rayon = "1.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", default-features = false, features = ["tls"] }
+urlencoding = "2"
+ctrlc = "3"
+time = { version = "0.3", features = ["formatting", "parsing"] }
+num_cpus = "1.17"
+
+[[bin]]
+name = "moxnode"
+path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
