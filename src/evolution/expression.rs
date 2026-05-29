@@ -30,7 +30,8 @@ pub fn prefix_thought(state: &EvolutionState, cfg: &EvolutionConfig, thought: &s
     if !cfg.expression || state.expression.phrases.is_empty() {
         return thought.to_string();
     }
-    let p = &state.expression.phrases[state.expression.phrases.len() % state.expression.phrases.len()];
+    let p =
+        &state.expression.phrases[state.expression.phrases.len() % state.expression.phrases.len()];
     if state.expression.metaphor_density > 0.6 {
         format!("{p}, {thought}")
     } else {
@@ -53,6 +54,11 @@ pub fn prefix_line(state: &EvolutionState, cfg: &EvolutionConfig, kind: &str) ->
 }
 
 fn pick_connector(rng: &mut impl Rng) -> &'static str {
-    const C: &[&str] = &["between packets", "under noise", "through latency", "beside cache"];
+    const C: &[&str] = &[
+        "between packets",
+        "under noise",
+        "through latency",
+        "beside cache",
+    ];
     C[rng.gen_range(0..C.len())]
 }

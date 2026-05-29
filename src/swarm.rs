@@ -35,7 +35,13 @@ pub fn run_swarm(cfg: SwarmConfig, stop: Arc<AtomicBool>) {
             } else {
                 spawn_mem(id)
             };
-            Creature::from_memory(mem, Some(path), false, Some(&cfg.writings), EvolutionConfig::none())
+            Creature::from_memory(
+                mem,
+                Some(path),
+                false,
+                Some(&cfg.writings),
+                EvolutionConfig::none(),
+            )
         })
         .collect();
 

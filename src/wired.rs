@@ -164,7 +164,10 @@ pub fn search_query(
 
 pub fn wired_frame(i: usize, c: &ThoughtCtx, rng: &mut impl Rng) -> String {
     match i % WIRED_FRAME_COUNT {
-        0 => format!("I wonder what happens when all the {} get lonely", c.word(rng)),
+        0 => format!(
+            "I wonder what happens when all the {} get lonely",
+            c.word(rng)
+        ),
         1 => format!("Do {} dream of infinite {}?", c.topic, c.favorite),
         2 => format!(
             "Sometimes I feel like I'm just variables in the wind around {}",

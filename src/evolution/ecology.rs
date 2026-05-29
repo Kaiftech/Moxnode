@@ -1,5 +1,5 @@
-use crate::evolution::state::{EvolutionState, LivingMemory};
 use crate::evolution::config::EvolutionConfig;
+use crate::evolution::state::{EvolutionState, LivingMemory};
 use crate::memory::CreatureMemory;
 use rand::Rng;
 use rayon::prelude::*;
@@ -32,7 +32,9 @@ pub fn tick(mem: &mut CreatureMemory, cfg: &EvolutionConfig, rng: &mut impl Rng)
     if rng.gen::<f32>() < RESURFACE_CHANCE {
         if let Some((id, content, distortion)) = weak_memory(state, rng) {
             let distorted = distort_text(&content, distortion, rng);
-            state.contradictions.push(format!("resurfaced: {distorted}"));
+            state
+                .contradictions
+                .push(format!("resurfaced: {distorted}"));
             if let Some(lm) = state.living_memories.iter_mut().find(|x| x.id == id) {
                 lm.strength += 0.15;
                 lm.recalls += 1;
@@ -43,14 +45,21 @@ pub fn tick(mem: &mut CreatureMemory, cfg: &EvolutionConfig, rng: &mut impl Rng)
 
     state.living_memories.retain(|m| m.strength > 0.04);
     if state.living_memories.len() > 80 {
-        state.living_memories.sort_by(|a, b| b.strength.partial_cmp(&a.strength).unwrap());
+        state
+            .living_memories
+            .sort_by(|a, b| b.strength.partial_cmp(&a.strength).unwrap());
         state.living_memories.truncate(80);
     }
 }
 
 fn sync_from_legacy(mem: &mut CreatureMemory) {
     for fact in mem.learned_facts.iter().rev().take(3) {
-        if mem.evolution.living_memories.iter().any(|m| &m.content == fact) {
+        if mem
+            .evolution
+            .living_memories
+            .iter()
+            .any(|m| &m.content == fact)
+        {
             continue;
         }
         let id = mem.evolution.next_memory_id;

@@ -72,8 +72,14 @@ impl Creature {
             Intent::Think => self.do_think(rng),
             Intent::Search => {
                 if self.evo.internet {
-                    let world_done =
-                        evolution::try_world_search(&mut self.mem, net, budget, &self.evo, rng, self.verbose);
+                    let world_done = evolution::try_world_search(
+                        &mut self.mem,
+                        net,
+                        budget,
+                        &self.evo,
+                        rng,
+                        self.verbose,
+                    );
                     if !world_done {
                         self.do_search(net, budget, rng);
                     } else {
@@ -81,7 +87,11 @@ impl Creature {
                         let thought = compose_thought(&self.mem, rng);
                         let thought = evolution::style_thought(&self.mem, &self.evo, thought);
                         if self.verbose {
-                            let p = evolution::expression::prefix_line(&self.mem.evolution, &self.evo, "think");
+                            let p = evolution::expression::prefix_line(
+                                &self.mem.evolution,
+                                &self.evo,
+                                "think",
+                            );
                             println!("{p} [{}] {}", self.mem.name, thought);
                         }
                         self.mem.remember_thought(thought);
@@ -183,7 +193,10 @@ impl Creature {
         self.mem.energy_level += rng.gen_range(8..22);
         self.mem.mood = "serene".into();
         if self.verbose {
-            println!("😴 [{}] rests (energy → {})", self.mem.name, self.mem.energy_level);
+            println!(
+                "😴 [{}] rests (energy → {})",
+                self.mem.name, self.mem.energy_level
+            );
         }
     }
 
@@ -254,7 +267,10 @@ impl Creature {
                     .or_insert(50);
                 *entry = clamp(*entry + change, 0, 100);
                 if self.verbose {
-                    println!("🧬 [{}] {} {:+} → {}", self.mem.name, trait_name, change, entry);
+                    println!(
+                        "🧬 [{}] {} {:+} → {}",
+                        self.mem.name, trait_name, change, entry
+                    );
                 }
             }
             1 => {
@@ -305,8 +321,16 @@ impl Creature {
 
     fn update_mood(&mut self, rng: &mut impl Rng) {
         const MOODS: &[&str] = &[
-            "curious", "contemplative", "chaotic", "melancholy", "excited", "confused", "serene",
-            "restless", "enlightened", "overwhelmed",
+            "curious",
+            "contemplative",
+            "chaotic",
+            "melancholy",
+            "excited",
+            "confused",
+            "serene",
+            "restless",
+            "enlightened",
+            "overwhelmed",
         ];
         self.mem.mood = if self.mem.energy_level < 30 {
             "tired".into()
