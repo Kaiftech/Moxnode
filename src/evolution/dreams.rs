@@ -40,7 +40,11 @@ pub fn maybe_dream(
     }
 
     mem.remember_thought(thought.clone());
-    ecology::ingest_experience(&mut mem.evolution, &format!("dream: {thought}"), mem.run_count);
+    ecology::ingest_experience(
+        &mut mem.evolution,
+        &format!("dream: {thought}"),
+        mem.run_count,
+    );
 
     if rng.gen_bool(0.3) {
         let trait_name = mem.dominant_trait().to_string();

@@ -186,7 +186,9 @@ fn run_single_loop(cli: &Cli, stop: Arc<AtomicBool>, evo: EvolutionConfig) {
         tick_once(&mut creature, &net, &budget, cli);
         let _ = creature.save();
         let mut rng = rand::thread_rng();
-        thread::sleep(Duration::from_millis(creature.sleep_ms(&mut rng, cli.turbo)));
+        thread::sleep(Duration::from_millis(
+            creature.sleep_ms(&mut rng, cli.turbo),
+        ));
     }
 
     println!("\n🌙 goodnight");
