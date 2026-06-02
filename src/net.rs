@@ -179,7 +179,16 @@ fn relevance(query: &[String], text: &str) -> f32 {
     if query.is_empty() {
         return 0.1;
     }
-    let ttok = tokenize(text);
+
+    // Convert text to lower case once
+    let text_lower = text.to_ascii_lowercase();
+
+    // Tokenize as slices instead of allocating Strings
+    let ttok: Vec<&str> = text_lower
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 3)
+        .collect();
+
     let hits = query
         .iter()
         .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
