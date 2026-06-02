@@ -51,16 +51,7 @@ pub fn maybe_leap(
     ];
 
     for q in &topics {
-        let r = world::explore(
-            mem,
-            net,
-            budget,
-            "evolutionary leap",
-            q,
-            8,
-            false,
-            rng,
-        );
+        let r = world::explore(mem, net, budget, "evolutionary leap", q, 8, false, rng);
         if verbose && !r.snippets.is_empty() {
             println!("Topics discovered:");
             for s in r.snippets.iter().take(1) {
@@ -77,7 +68,10 @@ pub fn maybe_leap(
         println!("priority mutation");
         println!("dream trigger");
         println!();
-        println!("Next leap interval: {} runs", mem.evolution.leap.interval.saturating_sub(1).max(10));
+        println!(
+            "Next leap interval: {} runs",
+            mem.evolution.leap.interval.saturating_sub(1).max(10)
+        );
         println!("Cooldown: reflection period (12 runs)");
         println!();
     }

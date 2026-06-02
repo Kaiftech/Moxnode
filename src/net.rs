@@ -18,7 +18,9 @@ pub struct Net {
 
 impl Net {
     pub fn new() -> Self {
-        let agent = ureq::AgentBuilder::new().timeout(Duration::from_secs(12)).build();
+        let agent = ureq::AgentBuilder::new()
+            .timeout(Duration::from_secs(12))
+            .build();
         Self {
             agent,
             cache: DashMap::new(),
@@ -178,7 +180,10 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
     let ttok = tokenize(text);
-    let hits = query.iter().filter(|t| ttok.iter().any(|x| x.contains(t.as_str()))).count();
+    let hits = query
+        .iter()
+        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .count();
     hits as f32 / query.len() as f32
 }
 
@@ -212,9 +217,9 @@ impl NetBudget {
         loop {
             let r = self.remaining.load(Ordering::Relaxed);
             if r == 0 {
-                return net.cached(query).map(|s| {
-                    serde_json::json!({"Abstract": s}).to_string()
-                });
+                return net
+                    .cached(query)
+                    .map(|s| serde_json::json!({"Abstract": s}).to_string());
             }
             if self
                 .remaining

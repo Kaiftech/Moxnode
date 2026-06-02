@@ -15,7 +15,11 @@ pub fn record_intent(state: &mut EvolutionState, intent: Intent, run: u64) {
         state.last_intents.remove(0);
     }
 
-    let count = state.behavior_counts.get(intent.label()).copied().unwrap_or(0);
+    let count = state
+        .behavior_counts
+        .get(intent.label())
+        .copied()
+        .unwrap_or(0);
     if count >= THRESHOLD && count % THRESHOLD == 0 {
         let pattern = habit_pattern(intent);
         if !state.habits.iter().any(|h| h.pattern == pattern) {

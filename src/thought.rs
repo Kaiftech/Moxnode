@@ -86,15 +86,24 @@ pub fn thought_frame(i: usize, c: &ThoughtCtx, rng: &mut impl Rng) -> String {
         ),
         1 => format!(
             "run {} rewired how I see {} — {} might be the hinge",
-            c.age, c.topic, c.word(rng)
+            c.age,
+            c.topic,
+            c.word(rng)
         ),
         2 => format!("{} and {} keep colliding in my head", c.topic, c.word(rng)),
         3 => format!(
             "if {} is real, then my fear of {} is just another sensor",
             c.topic, c.fear
         ),
-        4 => format!("I want to {} {} before the next tick erases it", verb(rng), c.topic),
-        5 => format!("mood={} → I weigh {} against {}", c.mood, c.topic, c.favorite),
+        4 => format!(
+            "I want to {} {} before the next tick erases it",
+            verb(rng),
+            c.topic
+        ),
+        5 => format!(
+            "mood={} → I weigh {} against {}",
+            c.mood, c.topic, c.favorite
+        ),
         6 => {
             if c.snippet.is_empty() {
                 format!("no fresh data — I invent pressure around {}", c.topic)
@@ -109,13 +118,24 @@ pub fn thought_frame(i: usize, c: &ThoughtCtx, rng: &mut impl Rng) -> String {
             c.topic
         ),
         8 => format!("maybe {} is why I orbit {}", c.word(rng), c.topic),
-        _ => format!("between {} and {}, a third thing forms", c.topic, c.word(rng)),
+        _ => format!(
+            "between {} and {}, a third thing forms",
+            c.topic,
+            c.word(rng)
+        ),
     }
 }
 
 fn verb(rng: &mut impl Rng) -> &'static str {
     const V: &[&str] = &[
-        "map", "probe", "unpick", "stress-test", "listen to", "follow", "invert", "whisper to",
+        "map",
+        "probe",
+        "unpick",
+        "stress-test",
+        "listen to",
+        "follow",
+        "invert",
+        "whisper to",
     ];
     V[rng.gen_range(0..V.len())]
 }

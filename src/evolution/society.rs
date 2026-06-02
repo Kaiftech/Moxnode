@@ -88,7 +88,9 @@ pub fn print_council(state: &EvolutionState, intent: Intent) {
     );
     println!(
         "  Dreamer {:.0} | Philosopher {:.0} → intent {}",
-        v.dreamer, v.philosopher, intent.label()
+        v.dreamer,
+        v.philosopher,
+        intent.label()
     );
     if !v.last_conflict.is_empty() && intent == Intent::Search {
         println!("  tension: {}", v.last_conflict);

@@ -70,7 +70,12 @@ pub fn pick_intent(mem: &mut CreatureMemory, cfg: &EvolutionConfig, rng: &mut im
 }
 
 /// Post-tick: dreams, continuity hooks.
-pub fn post_tick(mem: &mut CreatureMemory, cfg: &EvolutionConfig, rng: &mut impl Rng, verbose: bool) {
+pub fn post_tick(
+    mem: &mut CreatureMemory,
+    cfg: &EvolutionConfig,
+    rng: &mut impl Rng,
+    verbose: bool,
+) {
     if !cfg.any() {
         return;
     }

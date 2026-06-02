@@ -113,9 +113,8 @@ impl CreatureMemory {
 
     pub fn load(path: &Path) -> std::io::Result<Self> {
         let data = fs::read_to_string(path)?;
-        let mut mem: Self = serde_json::from_str(&data).map_err(|e| {
-            std::io::Error::new(std::io::ErrorKind::InvalidData, e)
-        })?;
+        let mut mem: Self = serde_json::from_str(&data)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
         mem.sanitize();
         Ok(mem)
     }
@@ -143,7 +142,8 @@ impl CreatureMemory {
         if self.personality.is_empty() {
             let mut rng = rand::thread_rng();
             for t in TRAITS {
-                self.personality.insert(t.to_string(), rng.gen_range(0..100));
+                self.personality
+                    .insert(t.to_string(), rng.gen_range(0..100));
             }
         }
         self.energy_level = clamp(self.energy_level, 0, 100);
@@ -233,14 +233,18 @@ fn format_duration(d: Duration) -> String {
 
 pub fn random_name(rng: &mut impl Rng) -> String {
     const P: [&str; 14] = [
-        "Zyx", "Qol", "Nim", "Vex", "Pix", "Glo", "Mox", "Kal", "Fey", "Dex", "Nyx", "Void", "Echo",
-        "Flux",
+        "Zyx", "Qol", "Nim", "Vex", "Pix", "Glo", "Mox", "Kal", "Fey", "Dex", "Nyx", "Void",
+        "Echo", "Flux",
     ];
     const S: [&str; 14] = [
         "ling", "bit", "core", "flux", "wave", "byte", "node", "sync", "mesh", "arc", "mind",
         "soul", "net", "web",
     ];
-    format!("{}{}", P[rng.gen_range(0..P.len())], S[rng.gen_range(0..S.len())])
+    format!(
+        "{}{}",
+        P[rng.gen_range(0..P.len())],
+        S[rng.gen_range(0..S.len())]
+    )
 }
 
 pub fn normalize_topic(topic: &str) -> String {
@@ -253,7 +257,17 @@ pub fn normalize_topic(topic: &str) -> String {
 
 pub fn dedupe(mut v: Vec<String>) -> Vec<String> {
     let mut seen = std::collections::HashSet::new();
-    v.retain(|s| !s.is_empty() && seen.insert(s.clone()));
+    // ⚡ Bolt optimization: Avoid cloning strings that are already in the set.
+    // By checking `seen.contains(s)` first, we eliminate unnecessary allocations
+    // for duplicate strings. This is a common operation when sanitizing memory.
+    v.retain(|s| {
+        if s.is_empty() || seen.contains(s) {
+            false
+        } else {
+            seen.insert(s.clone());
+            true
+        }
+    });
     v
 }
 

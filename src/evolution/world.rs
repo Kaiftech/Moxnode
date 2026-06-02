@@ -17,7 +17,11 @@ pub struct WorldResult {
     pub snippets: Vec<String>,
 }
 
-pub fn should_search(mem: &CreatureMemory, cfg: &EvolutionConfig, rng: &mut impl Rng) -> Option<String> {
+pub fn should_search(
+    mem: &CreatureMemory,
+    cfg: &EvolutionConfig,
+    rng: &mut impl Rng,
+) -> Option<String> {
     if !cfg.internet {
         return None;
     }
