@@ -1,9 +1,8 @@
 use rand::Rng;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::collections::HashMap;
+use dashmap::DashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Mutex;
 use std::time::Duration;
 
 #[derive(Debug, Clone)]
@@ -14,7 +13,7 @@ pub struct SearchHit {
 
 pub struct Net {
     agent: ureq::Agent,
-    cache: Mutex<HashMap<String, String>>,
+    cache: DashMap<String, String>,
 }
 
 impl Net {
@@ -22,16 +21,14 @@ impl Net {
         let agent = ureq::AgentBuilder::new().timeout(Duration::from_secs(12)).build();
         Self {
             agent,
-            cache: Mutex::new(HashMap::new()),
+            cache: DashMap::new(),
         }
     }
 
     pub fn cached(&self, query: &str) -> Option<String> {
         self.cache
-            .lock()
-            .unwrap()
             .get(&query.to_ascii_lowercase())
-            .cloned()
+            .map(|r| r.value().clone())
     }
 
     pub fn search(&self, query: &str) -> Result<String, String> {
@@ -56,11 +53,10 @@ impl Net {
         let v: Value = serde_json::from_str(&body).map_err(|e| e.to_string())?;
         let info = extract_ddg(&v).unwrap_or_else(|| crate::wired::EMPTY_NET.to_string());
 
-        let mut cache = self.cache.lock().unwrap();
-        if cache.len() > 500 {
-            cache.clear();
+        if self.cache.len() > 500 {
+            self.cache.clear();
         }
-        cache.insert(key, info.clone());
+        self.cache.insert(key, info.clone());
         Ok(info)
     }
 
@@ -98,7 +94,6 @@ impl Net {
     }
 
     fn fetch_json(&self, query: &str) -> Result<String, String> {
-        let key = query.to_ascii_lowercase();
         if let Some(hit) = self.cached(query) {
             return Ok(serde_json::json!({"cached": hit}).to_string());
         }
