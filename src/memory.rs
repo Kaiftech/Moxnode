@@ -248,11 +248,14 @@ pub fn random_name(rng: &mut impl Rng) -> String {
 }
 
 pub fn normalize_topic(topic: &str) -> String {
-    let mut t = topic.trim().to_string();
-    while t.to_ascii_lowercase().starts_with("deep dive into ") {
-        t = t["deep dive into ".len()..].trim().to_string();
+    let mut t = topic.trim();
+    // ⚡ Bolt optimization: Use safe string slicing via `get()` and eq_ignore_ascii_case to avoid hidden allocations
+    // in tight loops, which cause thread contention over the shared global allocator, while preventing UTF-8 boundary panics.
+    let prefix = "deep dive into ";
+    while t.get(..prefix.len()).is_some_and(|s| s.eq_ignore_ascii_case(prefix)) {
+        t = t[prefix.len()..].trim();
     }
-    t
+    t.to_string()
 }
 
 pub fn dedupe(mut v: Vec<String>) -> Vec<String> {

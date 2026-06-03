@@ -210,7 +210,9 @@ fn pick_string(list: &[String], fallback: &str, rng: &mut impl Rng) -> String {
 fn tokenize(s: &str) -> Vec<String> {
     s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 4)
-        .filter(|w| !STOP.contains(&w.to_ascii_lowercase().as_str()))
+        // ⚡ Bolt optimization: Use eq_ignore_ascii_case instead of allocating a new lowercase string
+        // just to check if it's in the STOP word list.
+        .filter(|w| !STOP.iter().any(|stop| stop.eq_ignore_ascii_case(w)))
         .map(|w| w.to_ascii_lowercase())
         .collect()
 }
