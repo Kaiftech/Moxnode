@@ -1,7 +1,7 @@
+use dashmap::DashMap;
 use rand::Rng;
 use rayon::prelude::*;
 use serde_json::Value;
-use dashmap::DashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
