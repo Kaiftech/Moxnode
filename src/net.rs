@@ -180,18 +180,30 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
 
-    // Convert text to lower case once
-    let text_lower = text.to_ascii_lowercase();
-
-    // Tokenize as slices instead of allocating Strings
-    let ttok: Vec<&str> = text_lower
+    let ttok: Vec<&str> = text
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
         .collect();
 
     let hits = query
         .iter()
-        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .filter(|t| {
+            if t.is_empty() {
+                return true;
+            }
+            let t_bytes = t.as_bytes();
+            ttok.iter().any(|x| {
+                if x.len() < t.len() {
+                    false
+                } else {
+                    // Bolt: Avoids String allocation by sliding a byte window
+                    // and using eq_ignore_ascii_case directly.
+                    x.as_bytes()
+                        .windows(t.len())
+                        .any(|w| w.eq_ignore_ascii_case(t_bytes))
+                }
+            })
+        })
         .count();
     hits as f32 / query.len() as f32
 }
