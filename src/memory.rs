@@ -250,10 +250,9 @@ pub fn random_name(rng: &mut impl Rng) -> String {
 pub fn normalize_topic(topic: &str) -> String {
     let mut t = topic.trim();
     let prefix = "deep dive into ";
-    while t.len() >= prefix.len()
-        && t.is_char_boundary(prefix.len())
-        && t[..prefix.len()].eq_ignore_ascii_case(prefix)
-    {
+    // ⚡ Bolt optimization: Avoid string allocations in a loop.
+    // Use safe slicing (`.get`) and `eq_ignore_ascii_case` instead of `to_ascii_lowercase()` + `to_string()`.
+    while t.get(..prefix.len()).is_some_and(|p| p.eq_ignore_ascii_case(prefix)) {
         t = t[prefix.len()..].trim();
     }
     t.to_string()
