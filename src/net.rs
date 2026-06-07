@@ -175,23 +175,35 @@ fn tokenize(s: &str) -> Vec<String> {
         .collect()
 }
 
+fn contains_ignore_ascii_case(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+    if haystack.len() < needle.len() {
+        return false;
+    }
+    haystack
+        .as_bytes()
+        .windows(needle.len())
+        .any(|w| w.eq_ignore_ascii_case(needle.as_bytes()))
+}
+
 fn relevance(query: &[String], text: &str) -> f32 {
     if query.is_empty() {
         return 0.1;
     }
 
-    // Convert text to lower case once
-    let text_lower = text.to_ascii_lowercase();
-
-    // Tokenize as slices instead of allocating Strings
-    let ttok: Vec<&str> = text_lower
+    // ⚡ Bolt optimization: Avoid string allocations in hot Rayon paths.
+    // Instead of converting the whole text to lower case (`text.to_ascii_lowercase()`),
+    // tokenize the original text as slices and use zero-allocation substring matching.
+    let ttok: Vec<&str> = text
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
         .collect();
 
     let hits = query
         .iter()
-        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .filter(|t| ttok.iter().any(|x| contains_ignore_ascii_case(x, t.as_str())))
         .count();
     hits as f32 / query.len() as f32
 }
