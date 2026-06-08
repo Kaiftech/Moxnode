@@ -78,13 +78,14 @@ fn sync_from_legacy(mem: &mut CreatureMemory) {
 }
 
 fn cluster_memories(state: &mut EvolutionState) {
-    let tokens: Vec<Vec<String>> = state
+    let tokens: Vec<Vec<&str>> = state
         .living_memories
         .par_iter()
         .map(|m| tokenize(&m.content))
         .collect();
 
-    for (i, mem) in state.living_memories.iter_mut().enumerate() {
+    let mut updates = Vec::new();
+    for (i, mem) in state.living_memories.iter().enumerate() {
         let mut best = mem.cluster_id;
         let mut best_score = 0usize;
         for (j, other) in tokens.iter().enumerate() {
@@ -98,8 +99,12 @@ fn cluster_memories(state: &mut EvolutionState) {
             }
         }
         if best_score >= 2 {
-            mem.cluster_id = best;
+            updates.push((i, best));
         }
+    }
+
+    for (i, best) in updates {
+        state.living_memories[i].cluster_id = best;
     }
 }
 
@@ -157,14 +162,14 @@ fn distort_text(s: &str, amount: f32, rng: &mut impl Rng) -> String {
     out.join(" ")
 }
 
-fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+fn tokenize(s: &str) -> Vec<&str> {
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 4)
-        .map(String::from)
         .collect()
 }
 
-fn overlap(a: &[String], b: &[String]) -> usize {
-    a.iter().filter(|t| b.contains(t)).count()
+fn overlap(a: &[&str], b: &[&str]) -> usize {
+    a.iter()
+        .filter(|t| b.iter().any(|x| x.eq_ignore_ascii_case(t)))
+        .count()
 }
