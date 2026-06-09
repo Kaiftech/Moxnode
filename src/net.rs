@@ -180,18 +180,28 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
 
-    // Convert text to lower case once
-    let text_lower = text.to_ascii_lowercase();
-
-    // Tokenize as slices instead of allocating Strings
-    let ttok: Vec<&str> = text_lower
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|w| w.len() >= 3)
-        .collect();
-
+    // Avoid allocations: directly iterate over text slices and use zero-allocation byte windows
+    // for case-insensitive substring matching. This reduces thread contention over the shared
+    // global allocator during par_iter mapping.
     let hits = query
         .iter()
-        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .filter(|t| {
+            text.split(|c: char| !c.is_alphanumeric())
+                .filter(|w| w.len() >= 3)
+                .any(|x| {
+                    let needle_len = t.len();
+                    if needle_len == 0 {
+                        return true;
+                    }
+                    let haystack_bytes = x.as_bytes();
+                    if haystack_bytes.len() < needle_len {
+                        return false;
+                    }
+                    haystack_bytes
+                        .windows(needle_len)
+                        .any(|w| w.eq_ignore_ascii_case(t.as_bytes()))
+                })
+        })
         .count();
     hits as f32 / query.len() as f32
 }
