@@ -142,15 +142,15 @@ impl SelfWriter {
 }
 
 fn slug(name: &str) -> String {
-    name.chars()
-        .map(|c| {
-            if c.is_ascii_alphanumeric() {
-                c.to_ascii_lowercase()
-            } else {
-                '_'
-            }
-        })
-        .collect()
+    let mut s = String::with_capacity(name.len());
+    for c in name.chars() {
+        if c.is_ascii_alphanumeric() {
+            s.push(c.to_ascii_lowercase());
+        } else {
+            s.push('_');
+        }
+    }
+    s
 }
 
 fn iso_now() -> String {

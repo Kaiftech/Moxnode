@@ -158,10 +158,9 @@ fn distort_text(s: &str, amount: f32, rng: &mut impl Rng) -> String {
 }
 
 fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 4)
-        .map(String::from)
+        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
