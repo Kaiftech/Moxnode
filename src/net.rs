@@ -180,18 +180,25 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
 
-    // Convert text to lower case once
-    let text_lower = text.to_ascii_lowercase();
-
-    // Tokenize as slices instead of allocating Strings
-    let ttok: Vec<&str> = text_lower
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|w| w.len() >= 3)
-        .collect();
-
+    // ⚡ Bolt optimization: Avoid allocating a lowercased String or a vector of tokens.
+    // In Rayon's hot loop, allocating strings here causes severe thread contention.
+    // Instead, iterate directly and use zero-allocation byte window scanning.
     let hits = query
         .iter()
-        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .filter(|&t| {
+            let t_bytes = t.as_bytes();
+            if t_bytes.is_empty() {
+                return true;
+            }
+            text.split(|c: char| !c.is_alphanumeric())
+                .filter(|w| w.len() >= 3)
+                .any(|w| {
+                    w.len() >= t_bytes.len()
+                        && w.as_bytes()
+                            .windows(t_bytes.len())
+                            .any(|win| win.eq_ignore_ascii_case(t_bytes))
+                })
+        })
         .count();
     hits as f32 / query.len() as f32
 }
