@@ -168,10 +168,11 @@ fn extract_all_topics(v: &Value) -> Vec<String> {
 }
 
 fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+    // ⚡ Bolt optimization: Avoid calling `.to_ascii_lowercase()` on the entire string
+    // before tokenization. Defer memory allocation mapping to the final filtered tokens.
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
-        .map(String::from)
+        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
@@ -180,18 +181,29 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
 
-    // Convert text to lower case once
-    let text_lower = text.to_ascii_lowercase();
-
-    // Tokenize as slices instead of allocating Strings
-    let ttok: Vec<&str> = text_lower
+    // ⚡ Bolt optimization: Avoid allocating a lowercased version of the entire text string upfront.
+    // Tokenize as slices directly.
+    let ttok: Vec<&str> = text
         .split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
         .collect();
 
     let hits = query
         .iter()
-        .filter(|t| ttok.iter().any(|x| x.contains(t.as_str())))
+        .filter(|&t| {
+            if t.is_empty() {
+                return false;
+            }
+            ttok.iter().any(|&x| {
+                if x.len() < t.len() {
+                    return false;
+                }
+                // Zero-allocation case-insensitive substring search
+                x.as_bytes()
+                    .windows(t.len())
+                    .any(|w| w.eq_ignore_ascii_case(t.as_bytes()))
+            })
+        })
         .count();
     hits as f32 / query.len() as f32
 }

@@ -158,10 +158,11 @@ fn distort_text(s: &str, amount: f32, rng: &mut impl Rng) -> String {
 }
 
 fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+    // ⚡ Bolt optimization: Avoid calling `.to_ascii_lowercase()` on the entire string
+    // before tokenization. Defer memory allocation mapping to the final filtered tokens.
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 4)
-        .map(String::from)
+        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
