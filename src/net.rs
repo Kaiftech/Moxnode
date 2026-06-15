@@ -168,10 +168,10 @@ fn extract_all_topics(v: &Value) -> Vec<String> {
 }
 
 fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+    // ⚡ Bolt optimization: Defer `to_ascii_lowercase` to avoid hidden string allocations for the whole string.
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
-        .map(String::from)
+        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
