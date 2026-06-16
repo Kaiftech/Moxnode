@@ -168,10 +168,10 @@ fn extract_all_topics(v: &Value) -> Vec<String> {
 }
 
 fn tokenize(s: &str) -> Vec<String> {
-    s.to_ascii_lowercase()
-        .split(|c: char| !c.is_alphanumeric())
+    // ⚡ Bolt optimization: Defer `to_ascii_lowercase` to avoid hidden string allocations for the whole string.
+    s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
-        .map(String::from)
+        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
@@ -180,24 +180,28 @@ fn relevance(query: &[String], text: &str) -> f32 {
         return 0.1;
     }
 
-    // ⚡ Bolt optimization: Avoid allocating a lowercased String or a vector of tokens.
-    // In Rayon's hot loop, allocating strings here causes severe thread contention.
-    // Instead, iterate directly and use zero-allocation byte window scanning.
+    // ⚡ Bolt optimization: Avoid allocating a lowercased version of the entire text string upfront.
+    // Tokenize as slices directly.
+    let ttok: Vec<&str> = text
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| w.len() >= 3)
+        .collect();
+
     let hits = query
         .iter()
         .filter(|&t| {
-            let t_bytes = t.as_bytes();
-            if t_bytes.is_empty() {
-                return true;
+            if t.is_empty() {
+                return false;
             }
-            text.split(|c: char| !c.is_alphanumeric())
-                .filter(|w| w.len() >= 3)
-                .any(|w| {
-                    w.len() >= t_bytes.len()
-                        && w.as_bytes()
-                            .windows(t_bytes.len())
-                            .any(|win| win.eq_ignore_ascii_case(t_bytes))
-                })
+            ttok.iter().any(|&x| {
+                if x.len() < t.len() {
+                    return false;
+                }
+                // Zero-allocation case-insensitive substring search
+                x.as_bytes()
+                    .windows(t.len())
+                    .any(|w| w.eq_ignore_ascii_case(t.as_bytes()))
+            })
         })
         .count();
     hits as f32 / query.len() as f32
