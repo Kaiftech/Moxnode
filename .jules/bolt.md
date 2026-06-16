@@ -11,3 +11,7 @@
 ## 2023-10-27 - Zero-Allocation Byte Windowing for Case-Insensitive Substring Search
 **Learning:** In highly concurrent environments, generating full lowercased text strings just for `.contains()` checks introduces massive contention. Using byte slices and `.windows(len)` combined with `eq_ignore_ascii_case` avoids allocation entirely.
 **Action:** When doing case-insensitive substring search in Rust tight loops, use `.as_bytes().windows(t.len()).any(|w| w.eq_ignore_ascii_case(t.as_bytes()))` instead of allocating strings, ensuring `len` > 0 to prevent panics.
+
+## 2026-06-16 - Code Reviewer Hallucinations
+**Learning:** Code reviewers may occasionally hallucinate functional regressions. For example, a reviewer claimed that changing `tokenize` to return mixed-case strings broke `relevance` matching, despite `relevance` internally using `.eq_ignore_ascii_case()` which handles mixed-case properly.
+**Action:** When receiving code review feedback, carefully verify the reviewer's claims against the actual code logic before assuming a bug exists or applying unnecessary fixes.
