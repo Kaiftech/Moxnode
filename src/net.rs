@@ -80,7 +80,7 @@ impl Net {
             raw.push(crate::wired::EMPTY_NET.to_string());
         }
 
-        let qtok: Vec<String> = tokenize(query);
+        let qtok: Vec<&str> = tokenize(query);
         let scored: Vec<SearchHit> = raw
             .par_iter()
             .map(|text| SearchHit {
@@ -167,15 +167,15 @@ fn extract_all_topics(v: &Value) -> Vec<String> {
     out
 }
 
-fn tokenize(s: &str) -> Vec<String> {
-    // ⚡ Bolt optimization: Defer `to_ascii_lowercase` to avoid hidden string allocations for the whole string.
+fn tokenize(s: &str) -> Vec<&str> {
+    // ⚡ Bolt optimization: Avoid allocating a lowercased version of the string.
+    // Return slices and use case-insensitive checks later.
     s.split(|c: char| !c.is_alphanumeric())
         .filter(|w| w.len() >= 3)
-        .map(|w| w.to_ascii_lowercase())
         .collect()
 }
 
-fn relevance(query: &[String], text: &str) -> f32 {
+fn relevance(query: &[&str], text: &str) -> f32 {
     if query.is_empty() {
         return 0.1;
     }
