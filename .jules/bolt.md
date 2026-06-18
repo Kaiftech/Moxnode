@@ -11,3 +11,7 @@
 ## 2023-10-27 - Zero-Allocation Byte Windowing for Case-Insensitive Substring Search
 **Learning:** In highly concurrent environments, generating full lowercased text strings just for `.contains()` checks introduces massive contention. Using byte slices and `.windows(len)` combined with `eq_ignore_ascii_case` avoids allocation entirely.
 **Action:** When doing case-insensitive substring search in Rust tight loops, use `.as_bytes().windows(t.len()).any(|w| w.eq_ignore_ascii_case(t.as_bytes()))` instead of allocating strings, ensuring `len` > 0 to prevent panics.
+
+## 2024-05-24 - Rust String Truncation Allocation Overhead
+**Learning:** `s.chars().take(n).collect::<String>()` allocates memory for every truncated string character. More crucially, performing an explicit bounds check like `s.chars().count() <= n` traverses the entire string $O(N)$, which is drastically inefficient for very large strings (e.g., memory payloads of thousands of chars truncated to the first 100 chars).
+**Action:** Always favor slicing via `.char_indices().nth(n)` over `chars().take(n)`. This yields the precise byte boundary and avoids any heap allocation, simply slicing the original reference as `&s[..idx]`.
