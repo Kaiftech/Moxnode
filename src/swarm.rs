@@ -101,11 +101,13 @@ fn spawn_mem(id: usize) -> CreatureMemory {
     m
 }
 
+// ⚡ Bolt optimization: Avoid full O(N) string length scan and char-by-char string collection allocation.
+// Slices the string directly at the requested char boundary.
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    let mut iter = s.char_indices();
+    match iter.nth(n) {
+        Some((idx, _)) => format!("{}…", &s[..idx]),
+        None => s.to_string(),
     }
 }
 
