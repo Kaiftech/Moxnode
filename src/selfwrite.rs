@@ -95,7 +95,10 @@ impl SelfWriter {
         if !mem.learned_facts.is_empty() {
             body.push_str("\n## Learned from the wire\n\n");
             for f in mem.learned_facts.iter().rev().take(8) {
-                let line: String = f.chars().take(200).collect();
+                let line = match f.char_indices().nth(200) {
+                    None => f,
+                    Some((idx, _)) => &f[..idx],
+                };
                 body.push_str(&format!("- {line}\n"));
             }
         }
