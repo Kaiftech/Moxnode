@@ -412,9 +412,10 @@ pub fn load_or_create(
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    // ⚡ Bolt optimization: Avoid O(N) `.chars().count()` and `.collect::<String>()`
+    // by using lazily evaluated `.char_indices()` to find the exact byte boundary for slicing.
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
