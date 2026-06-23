@@ -33,10 +33,10 @@ impl SelfWriter {
     /// Called every tick — append journal; periodically rewrite autobiography.
     pub fn after_tick(&self, mem: &CreatureMemory, rng: &mut impl Rng) {
         let _ = self.append_journal(mem);
-        if mem.run_count % 5 == 0 {
+        if mem.run_count.is_multiple_of(5) {
             let _ = self.rewrite_being(mem);
         }
-        if mem.run_count % 17 == 0 {
+        if mem.run_count.is_multiple_of(17) {
             let _ = self.write_fragment(mem, rng);
         }
         if mem.run_count == 1 {
@@ -95,7 +95,10 @@ impl SelfWriter {
         if !mem.learned_facts.is_empty() {
             body.push_str("\n## Learned from the wire\n\n");
             for f in mem.learned_facts.iter().rev().take(8) {
-                let line: String = f.chars().take(200).collect();
+                let line = match f.char_indices().nth(200) {
+                    None => f.as_str(),
+                    Some((idx, _)) => &f[..idx],
+                };
                 body.push_str(&format!("- {line}\n"));
             }
         }

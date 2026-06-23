@@ -11,3 +11,6 @@
 ## 2023-10-27 - Zero-Allocation Byte Windowing for Case-Insensitive Substring Search
 **Learning:** In highly concurrent environments, generating full lowercased text strings just for `.contains()` checks introduces massive contention. Using byte slices and `.windows(len)` combined with `eq_ignore_ascii_case` avoids allocation entirely.
 **Action:** When doing case-insensitive substring search in Rust tight loops, use `.as_bytes().windows(t.len()).any(|w| w.eq_ignore_ascii_case(t.as_bytes()))` instead of allocating strings, ensuring `len` > 0 to prevent panics.
+## 2024-05-24 - Rust Type Match Coercion for String optimizations
+**Learning:** When using `match` to replace string allocations (e.g., using `s.char_indices().nth(n)` instead of `.chars().take(n).collect::<String>()`), ensuring both match arms evaluate to the exact same type (`&str` vs `&String`) is crucial to avoid E0308. A `&String` matched with a `&str` slice `&s[..idx]` will fail compilation.
+**Action:** When matching to return string slices for optimization, safely coerce `&String`s to `&str` in the `None` arm via `.as_str()` or `&s[..]`.

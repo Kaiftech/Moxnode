@@ -17,7 +17,7 @@ pub fn maybe_dream(
     }
 
     let pressure = mem.trait_val("creativity") + mem.trait_val("anxiety");
-    let trigger = mem.run_count % 17 == 0
+    let trigger = mem.run_count.is_multiple_of(17)
         || !mem.evolution.contradictions.is_empty()
         || mem.mood == "restless";
 
@@ -89,8 +89,15 @@ fn compose_dream(mem: &CreatureMemory, rng: &mut impl Rng) -> String {
 
 fn ecology_distort(s: &str, d: f32) -> String {
     if d > 0.2 {
-        format!("{}~", &s.chars().take(40).collect::<String>())
+        let text = match s.char_indices().nth(40) {
+            None => s,
+            Some((idx, _)) => &s[..idx],
+        };
+        format!("{}~", text)
     } else {
-        s.chars().take(50).collect()
+        match s.char_indices().nth(50) {
+            None => s.to_string(),
+            Some((idx, _)) => s[..idx].to_string(),
+        }
     }
 }

@@ -20,7 +20,7 @@ pub fn maybe_leap(
         return false;
     }
 
-    let due = mem.run_count > 0 && mem.run_count % mem.evolution.leap.interval == 0;
+    let due = mem.run_count > 0 && mem.run_count.is_multiple_of(mem.evolution.leap.interval);
     if !due {
         return false;
     }
@@ -55,7 +55,10 @@ pub fn maybe_leap(
         if verbose && !r.snippets.is_empty() {
             println!("Topics discovered:");
             for s in r.snippets.iter().take(1) {
-                let line: String = s.chars().take(60).collect();
+                let line = match s.char_indices().nth(60) {
+                    None => &s[..],
+                    Some((idx, _)) => &s[..idx],
+                };
                 println!("- {line}");
             }
         }

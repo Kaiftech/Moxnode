@@ -66,13 +66,13 @@ pub fn run_swarm(cfg: SwarmConfig, stop: Arc<AtomicBool>) {
             c.tick(net.as_ref(), budget.as_ref(), &mut rng);
         });
 
-        if t % cfg.save_every == 0 {
+        if t.is_multiple_of(cfg.save_every) {
             creatures.par_iter().for_each(|c| {
                 let _ = c.save();
             });
         }
 
-        if cfg.sample_log > 0 && t % cfg.sample_log as u64 == 0 {
+        if cfg.sample_log > 0 && t.is_multiple_of(cfg.sample_log as u64) {
             let idx = (t as usize) % creatures.len();
             let c = &creatures[idx];
             println!(
@@ -102,10 +102,9 @@ fn spawn_mem(id: usize) -> CreatureMemory {
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
 

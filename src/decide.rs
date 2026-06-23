@@ -75,7 +75,7 @@ pub fn choose_intent(
     if mem.learned_facts.len() < 3 {
         w[1].1 += 22.0;
     }
-    if mem.run_count % 3 == 0 {
+    if mem.run_count.is_multiple_of(3) {
         w[6].1 += 8.0;
     }
 
