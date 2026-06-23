@@ -41,7 +41,7 @@ pub fn prefix_thought(state: &EvolutionState, cfg: &EvolutionConfig, thought: &s
 
 pub fn prefix_line(state: &EvolutionState, cfg: &EvolutionConfig, kind: &str) -> String {
     if !cfg.expression {
-        return format!("💭");
+        return "💭".to_string();
     }
     let cadence = state.expression.cadence % 4;
     match (kind, cadence) {

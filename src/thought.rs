@@ -212,7 +212,11 @@ fn tokenize(s: &str) -> Vec<String> {
         .filter(|w| w.len() >= 4)
         // ⚡ Bolt optimization: Avoid string allocations for stop words comparison.
         // Use `eq_ignore_ascii_case` instead of allocating `.to_ascii_lowercase()`.
-        .filter(|w| !STOP.iter().any(|&stop_word| w.eq_ignore_ascii_case(stop_word)))
+        .filter(|w| {
+            !STOP
+                .iter()
+                .any(|&stop_word| w.eq_ignore_ascii_case(stop_word))
+        })
         .map(|w| w.to_ascii_lowercase())
         .collect()
 }

@@ -191,7 +191,7 @@ pub fn format_since(iso: &str) -> String {
     if let Ok(parsed) = OffsetDateTime::parse(iso, &Rfc3339) {
         let now = OffsetDateTime::now_utc();
         let d = now - parsed;
-        return format_duration(Duration::from_secs(d.whole_seconds().unsigned_abs() as u64));
+        return format_duration(Duration::from_secs(d.whole_seconds().unsigned_abs()));
     }
     // Go export uses extra fractional digits — rough fallback
     if iso.len() >= 19 {
@@ -252,7 +252,10 @@ pub fn normalize_topic(topic: &str) -> String {
     let prefix = "deep dive into ";
     // ⚡ Bolt optimization: Avoid string allocations in a loop.
     // Use safe slicing (`.get`) and `eq_ignore_ascii_case` instead of `to_ascii_lowercase()` + `to_string()`.
-    while t.get(..prefix.len()).is_some_and(|p| p.eq_ignore_ascii_case(prefix)) {
+    while t
+        .get(..prefix.len())
+        .is_some_and(|p| p.eq_ignore_ascii_case(prefix))
+    {
         t = t[prefix.len()..].trim();
     }
     t.to_string()
