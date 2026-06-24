@@ -55,7 +55,11 @@ pub fn maybe_leap(
         if verbose && !r.snippets.is_empty() {
             println!("Topics discovered:");
             for s in r.snippets.iter().take(1) {
-                let line: String = s.chars().take(60).collect();
+                // ⚡ Bolt optimization: Avoid string allocations for truncating snippets
+                let line = match s.char_indices().nth(60) {
+                    Some((idx, _)) => &s[..idx],
+                    None => s.as_str(),
+                };
                 println!("- {line}");
             }
         }

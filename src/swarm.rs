@@ -102,10 +102,11 @@ fn spawn_mem(id: usize) -> CreatureMemory {
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    // ⚡ Bolt optimization: Avoid O(N) `chars().count()` and `.chars().take(n).collect::<String>()`
+    // which iterate and allocate. Use lazy byte boundary slicing via `.char_indices().nth(n)`.
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
 

@@ -176,7 +176,10 @@ impl Creature {
         }
 
         if self.verbose {
-            let preview: String = fact.chars().take(90).collect();
+            let preview = match fact.char_indices().nth(90) {
+                Some((idx, _)) => &fact[..idx],
+                None => fact.as_str(),
+            };
             println!("🧠 [{}] {}", self.mem.name, preview);
         }
 
@@ -412,9 +415,10 @@ pub fn load_or_create(
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    // ⚡ Bolt optimization: Avoid `chars().count()` and `.chars().take(n).collect::<String>()`
+    // which iterate over the string and allocate memory. Use lazy byte boundary slicing instead.
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
