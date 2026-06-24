@@ -92,10 +92,10 @@ fn mutate_priority(state: &mut EvolutionState, rng: &mut impl Rng) {
 }
 
 fn normalize_key(s: &str) -> String {
-    let t = s.chars().take(32).collect::<String>();
-    if t.len() > 24 {
-        t.chars().take(24).collect()
-    } else {
-        t
+    // ⚡ Bolt optimization: Avoid string allocations for prefix slicing.
+    let limit = 24;
+    match s.char_indices().nth(limit) {
+        Some((idx, _)) => s[..idx].to_string(),
+        None => s.to_string(),
     }
 }
