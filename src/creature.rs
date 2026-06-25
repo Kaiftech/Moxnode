@@ -411,10 +411,10 @@ pub fn load_or_create(
     Creature::from_memory(mem, Some(path.to_path_buf()), verbose, writings, evo)
 }
 
+// ⚡ Bolt optimization: Use `char_indices().nth()` to avoid full string traversal and intermediate string allocation.
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
