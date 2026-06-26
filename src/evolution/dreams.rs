@@ -89,8 +89,14 @@ fn compose_dream(mem: &CreatureMemory, rng: &mut impl Rng) -> String {
 
 fn ecology_distort(s: &str, d: f32) -> String {
     if d > 0.2 {
-        format!("{}~", &s.chars().take(40).collect::<String>())
+        match s.char_indices().nth(40) {
+            Some((idx, _)) => format!("{}~", &s[..idx]),
+            None => format!("{}~", s),
+        }
     } else {
-        s.chars().take(50).collect()
+        match s.char_indices().nth(50) {
+            Some((idx, _)) => s[..idx].to_string(),
+            None => s.to_string(),
+        }
     }
 }

@@ -121,7 +121,10 @@ pub fn explore(
         println!("Priority Shift:");
         println!("{priority_topic} +{priority_delta:.0}");
         for s in snippets.iter().take(2) {
-            let p: String = s.chars().take(70).collect();
+            let p = match s.char_indices().nth(70) {
+                Some((idx, _)) => &s[..idx],
+                None => s.as_str(),
+            };
             println!("  · {p}");
         }
         println!();
