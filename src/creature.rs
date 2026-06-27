@@ -412,9 +412,9 @@ pub fn load_or_create(
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    // ⚡ Bolt optimization: Use `char_indices().nth()` to avoid O(N) `count()` and `collect::<String>()` allocations.
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
