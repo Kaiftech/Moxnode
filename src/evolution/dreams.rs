@@ -88,9 +88,18 @@ fn compose_dream(mem: &CreatureMemory, rng: &mut impl Rng) -> String {
 }
 
 fn ecology_distort(s: &str, d: f32) -> String {
+    // ⚡ Bolt optimization: Avoid string allocations for truncating.
     if d > 0.2 {
-        format!("{}~", &s.chars().take(40).collect::<String>())
+        if let Some((idx, _)) = s.char_indices().nth(40) {
+            format!("{}~", &s[..idx])
+        } else {
+            format!("{}~", s)
+        }
     } else {
-        s.chars().take(50).collect()
+        if let Some((idx, _)) = s.char_indices().nth(50) {
+            s[..idx].to_string()
+        } else {
+            s.to_string()
+        }
     }
 }
