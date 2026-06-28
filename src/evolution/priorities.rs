@@ -92,10 +92,12 @@ fn mutate_priority(state: &mut EvolutionState, rng: &mut impl Rng) {
 }
 
 fn normalize_key(s: &str) -> String {
-    let t = s.chars().take(32).collect::<String>();
-    if t.len() > 24 {
-        t.chars().take(24).collect()
+    // ⚡ Bolt optimization: Avoid string allocations for truncating.
+    // We want to limit to 24 chars if it was > 24, but the logic originally seemed to clamp it.
+    // It basically clamps `s` to max 24 characters.
+    if let Some((idx, _)) = s.char_indices().nth(24) {
+        s[..idx].to_string()
     } else {
-        t
+        s.to_string()
     }
 }

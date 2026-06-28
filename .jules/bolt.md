@@ -11,3 +11,6 @@
 ## 2023-10-27 - Zero-Allocation Byte Windowing for Case-Insensitive Substring Search
 **Learning:** In highly concurrent environments, generating full lowercased text strings just for `.contains()` checks introduces massive contention. Using byte slices and `.windows(len)` combined with `eq_ignore_ascii_case` avoids allocation entirely.
 **Action:** When doing case-insensitive substring search in Rust tight loops, use `.as_bytes().windows(t.len()).any(|w| w.eq_ignore_ascii_case(t.as_bytes()))` instead of allocating strings, ensuring `len` > 0 to prevent panics.
+## 2024-06-05 - Avoid O(N) operations and allocations in String truncations
+**Learning:** In moxnode, utility functions used `.chars().count()` (O(N) time) and `.chars().take(n).collect::<String>()` (heap allocation) for string truncation. These operations add unnecessary overhead.
+**Action:** When truncating or clamping strings in Rust, avoid counting total characters or collecting into new strings. Instead, use `.char_indices().nth(n)` to lazily find the correct byte boundary, and perform a zero-allocation byte slice `&s[..idx]`.

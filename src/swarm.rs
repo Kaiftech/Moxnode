@@ -102,10 +102,11 @@ fn spawn_mem(id: usize) -> CreatureMemory {
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
+    // ⚡ Bolt optimization: Avoid string allocations for truncating.
+    if let Some((idx, _)) = s.char_indices().nth(n) {
+        format!("{}…", &s[..idx])
     } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+        s.to_string()
     }
 }
 
