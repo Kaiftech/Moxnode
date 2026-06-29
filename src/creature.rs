@@ -176,7 +176,10 @@ impl Creature {
         }
 
         if self.verbose {
-            let preview: String = fact.chars().take(90).collect();
+            let preview = match fact.char_indices().nth(90) {
+                None => fact.to_string(),
+                Some((idx, _)) => fact[..idx].to_string(),
+            };
             println!("🧠 [{}] {}", self.mem.name, preview);
         }
 
@@ -412,9 +415,9 @@ pub fn load_or_create(
 }
 
 fn truncate(s: &str, n: usize) -> String {
-    if s.chars().count() <= n {
-        s.to_string()
-    } else {
-        format!("{}…", s.chars().take(n).collect::<String>())
+    // ⚡ Bolt optimization: Use `char_indices().nth()` to avoid allocating `take().collect::<String>()` and `count()` which is O(N).
+    match s.char_indices().nth(n) {
+        None => s.to_string(),
+        Some((idx, _)) => format!("{}…", &s[..idx]),
     }
 }
