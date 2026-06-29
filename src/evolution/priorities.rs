@@ -92,10 +92,17 @@ fn mutate_priority(state: &mut EvolutionState, rng: &mut impl Rng) {
 }
 
 fn normalize_key(s: &str) -> String {
-    let t = s.chars().take(32).collect::<String>();
+    let t = match s.char_indices().nth(32) {
+        None => s,
+        Some((idx, _)) => &s[..idx],
+    };
+
     if t.len() > 24 {
-        t.chars().take(24).collect()
+        match t.char_indices().nth(24) {
+            None => t.to_string(),
+            Some((idx, _)) => t[..idx].to_string(),
+        }
     } else {
-        t
+        t.to_string()
     }
 }
