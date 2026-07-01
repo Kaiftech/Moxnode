@@ -1,3 +1,4 @@
+use std::collections::{HashMap, HashSet};
 use crate::evolution::config::EvolutionConfig;
 use crate::evolution::state::{EvolutionState, LivingMemory};
 use crate::memory::CreatureMemory;
@@ -84,19 +85,45 @@ fn cluster_memories(state: &mut EvolutionState) {
         .map(|m| tokenize(&m.content))
         .collect();
 
+    // ⚡ Bolt optimization: Replace O(N^2) loop with an inverted index.
+    // This reduces the complexity of finding token overlap from O(N^2) down to O(N) by
+    // indexing which documents contain which tokens.
+    let mut index: HashMap<&String, Vec<usize>> = HashMap::new();
+    for (i, doc) in tokens.iter().enumerate() {
+        let mut seen = HashSet::new();
+        for t in doc {
+            // Equivalent to `b.contains(t)` in the inner loop of `overlap`,
+            // we only add a document once per unique token.
+            if seen.insert(t) {
+                index.entry(t).or_default().push(i);
+            }
+        }
+    }
+
     for (i, mem) in state.living_memories.iter_mut().enumerate() {
+        let mut scores: HashMap<usize, usize> = HashMap::new();
+
+        for t in &tokens[i] {
+            if let Some(docs) = index.get(t) {
+                for &j in docs {
+                    if i != j {
+                        *scores.entry(j).or_insert(0) += 1;
+                    }
+                }
+            }
+        }
+
         let mut best = mem.cluster_id;
         let mut best_score = 0usize;
-        for (j, other) in tokens.iter().enumerate() {
-            if i == j {
-                continue;
-            }
-            let score = overlap(&tokens[i], other);
-            if score > best_score {
+
+        for (&j, &score) in &scores {
+            // Handle ties properly to match original iteration order behavior
+            if score > best_score || (score == best_score && (j as u32) < best) {
                 best_score = score;
                 best = j as u32;
             }
         }
+
         if best_score >= 2 {
             mem.cluster_id = best;
         }
@@ -163,8 +190,4 @@ fn tokenize(s: &str) -> Vec<String> {
         .filter(|w| w.len() >= 4)
         .map(|w| w.to_ascii_lowercase())
         .collect()
-}
-
-fn overlap(a: &[String], b: &[String]) -> usize {
-    a.iter().filter(|t| b.contains(t)).count()
 }
